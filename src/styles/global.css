@@ -1,0 +1,76 @@
+:root {
+  --primary-color: #4E9F8C; /* Default light theme colors */
+  --accent-color: #D4AF37;
+  --background-light: #F8F8F8;
+  --text-light: #333333;
+
+  /* Dark theme variables */
+  --background-dark: #121212;
+  --text-dark: #e0e0e0;
+  --button-light-bg: #4E9F8C;
+  --button-dark-bg: #3C7D6F;
+}
+
+body {
+  background-color: var(--background-light);
+  color: var(--text-light);
+  transition: background-color 0.3s, color 0.3s ease;
+}
+
+[data-theme='dark'] {
+  background-color: var(--background-dark);
+  color: var(--text-dark);
+}
+
+button {
+  background-color: var(--button-light-bg);
+  color: white;
+  border-radius: 4px;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme='dark'] button {
+  background-color: var(--button-dark-bg);
+}
+
+header, footer {
+  background-color: var(--primary-color);
+}
+
+[data-theme='dark'] header,
+[data-theme='dark'] footer {
+  background-color: var(--button-dark-bg);
+}
+
+.card {
+  background-color: white;
+  color: var(--text-light);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
+}
+
+[data-theme='dark'] .card {
+  background-color: #1E1E1E;
+  color: var(--text-dark);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+input, select {
+  background-color: white;
+  color: var(--text-light);
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  padding: 10px;
+}
+
+[data-theme='dark'] input,
+[data-theme='dark'] select {
+  background-color: #1E1E1E;
+  color: var(--text-dark);
+  border: 1px solid var(--text-dark);
+}

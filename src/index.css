@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #4E9F8C; /* Muted teal/blue */
+  --accent-color: #D4AF37; /* Soft gold */
+  --background-color: #F8F8F8;
+  --text-color: #333333;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s ease;
+}

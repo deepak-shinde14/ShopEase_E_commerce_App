@@ -1,0 +1,690 @@
+//filtersidebar.js
+import React from 'react';
+
+const FilterSidebar = ({ categories, selectedCategory, onFilter }) => {
+    return (
+      <aside className="w-1/4 bg-white p-4 shadow-lg">
+        <h3 className="text-lg font-semibold mb-4">Categories</h3>
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => onFilter(category)}
+            className={`w-full text-left px-4 py-2 mb-2 rounded ${
+              selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-100'
+            } hover:bg-primary hover:text-white`}
+          >
+            {category}
+          </button>
+        ))}
+      </aside>
+    );
+  };
+  
+
+export default FilterSidebar;
+
+//footer.js
+// empty file
+
+//header.js
+// empty file
+
+//ProductCard.js
+import React, { useState } from 'react';
+
+const ProductCard = ({ product, onAddToWishlist }) => {
+  const [isAdded, setIsAdded] = useState(false);
+
+  const handleWishlist = () => {
+    setIsAdded(true);
+    onAddToWishlist(product);
+  };
+
+  return (
+    <div className="border rounded p-4 m-2 w-64 shadow-lg">
+      <img src={product.ImageURL} alt={product.ProductName} className="w-full h-40 object-cover mb-4" />
+      <h3 className="font-bold">{product.ProductName}</h3>
+      <p className="text-sm text-gray-500">{product.Category}</p>
+      <p className="text-lg font-semibold">₹{product.Price}</p>
+      {!isAdded ? (
+        <button
+          onClick={handleWishlist}
+          className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Add to Wishlist
+        </button>
+      ) : (
+        <p className="mt-2 text-green-500">Added to Wishlist</p>
+      )}
+    </div>
+  );
+};
+
+export default ProductCard;
+
+//ProductList.js
+import React from 'react';
+import ProductCard from './ProductCard';
+
+const ProductList = ({ userId, products, purchaseHistory }) => {
+  // Filter purchased product categories for the current user
+  const userPurchases = purchaseHistory.filter(p => p.UserID === userId);
+  const purchasedProductIDs = userPurchases.map(p => p.ProductID);
+  const purchasedCategories = [...new Set(products
+    .filter(p => purchasedProductIDs.includes(p.ProductID))
+    .map(p => p.Category))];
+
+  // Separate products into purchased and non-purchased categories
+  const nonPurchasedProducts = products
+    .filter(p => !purchasedCategories.includes(p.Category))
+    .sort((a, b) => a.ProductName.localeCompare(b.ProductName));
+
+  const purchasedProducts = products
+    .filter(p => purchasedCategories.includes(p.Category))
+    .sort((a, b) => a.ProductName.localeCompare(b.ProductName));
+
+  const sortedProducts = [...nonPurchasedProducts, ...purchasedProducts];
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+      {sortedProducts.map(product => (
+        <ProductCard key={product.ProductID} product={product} />
+      ))}
+    </div>
+  );
+};
+
+export default ProductList;
+
+//searchbar.js
+import React from 'react';
+
+const SearchBar = ({ onSearch }) => {
+  return (
+    <div className="w-full flex justify-center my-4">
+      <input
+        type="text"
+        className="p-2 border rounded w-1/2"
+        placeholder="Search products..."
+        onChange={(e) => onSearch(e.target.value)}
+      />
+    </div>
+  );
+};
+
+export default SearchBar;
+
+//Wishlist.js
+import React from 'react';
+import ProductCard from './ProductCard';
+
+const Wishlist = ({ wishlist }) => {
+  return (
+    <div>
+      <h2 className="text-2xl font-bold my-4">Your Wishlist</h2>
+      <div className="flex flex-wrap">
+        {wishlist.map((product) => (
+          <ProductCard key={product.ProductID} product={product} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Wishlist;
+
+//LoginPage.js
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { loadUsers } from '../utils/dataLoader'; // Import the async loader
+
+const LoginPage = ({ setLoggedInUser }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [users, setUsers] = useState([]); // Local state for users
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Load users asynchronously
+    const fetchUsers = async () => {
+      try {
+        const loadedUsers = await loadUsers();  // Await the async call to load users
+        setUsers(loadedUsers);  // Set the users in state
+      } catch (error) {
+        console.error('Error loading users:', error);
+        setError('Failed to load users');
+      }
+    };
+    
+    fetchUsers();  // Call the async function
+  }, []);  // Empty dependency array to run only once when the component mounts
+
+  const handleLogin = () => {
+    if (users.length === 0) {
+      setError('Users are still loading. Please try again later.');
+      return;
+    }
+
+    const user = users.find(
+      (u) => u.username === username && u.password === password
+    );
+
+    if (user) {
+      setLoggedInUser(user);
+      setError('');
+      navigate('/shopping');
+    } else {
+      setError('Invalid username or password');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Welcome Back!</h2>
+        <p className="text-center text-gray-600 mb-4">Please log in to continue</p>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        <div className="mb-4">
+          <label htmlFor="username" className="block text-gray-700 font-medium mb-2">
+            Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            placeholder="Enter your username"
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div className="mb-6">
+          <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={handleLogin}
+          className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300"
+        >
+          Login
+        </button>
+        <p className="text-center text-gray-500 text-sm mt-6">
+          Need help? <a href="#" className="text-blue-500 hover:underline">Contact Support</a>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
+
+//ShoppingPage.js
+import React, { useState, useEffect } from 'react';
+import { loadProducts, loadPurchaseHistory } from '../utils/dataLoader';
+
+const ShoppingPage = ({ loggedInUser }) => {
+  const [products, setProducts] = useState([]);
+  const [personalizedProducts, setPersonalizedProducts] = useState([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Load products and purchase history asynchronously
+        const allProducts = await loadProducts();
+        const purchaseHistory = await loadPurchaseHistory();
+
+        if (!allProducts || !purchaseHistory) {
+          setError('Failed to load data');
+          return;
+        }
+
+        // Get the categories the user has purchased from
+        const userPurchases = purchaseHistory.filter(
+          (entry) => entry.userId === loggedInUser?.userId
+        );
+        const purchasedCategories = [
+          ...new Set(
+            userPurchases.map((purchase) => {
+              const product = allProducts.find(
+                (p) => p.id === purchase.productId
+              );
+              return product ? product.category : null;
+            })
+          ),
+        ].filter(Boolean);
+
+        // Categorize products
+        const notPurchased = allProducts.filter(
+          (product) => !purchasedCategories.includes(product.category)
+        );
+        const purchased = allProducts.filter((product) =>
+          purchasedCategories.includes(product.category)
+        );
+
+        // Sort alphabetically within each category
+        notPurchased.sort((a, b) => a.name.localeCompare(b.name));
+        purchased.sort((a, b) => a.name.localeCompare(b.name));
+
+        setProducts(allProducts);
+        setPersonalizedProducts([...notPurchased, ...purchased]);
+      } catch (error) {
+        setError('Error loading data');
+      }
+    };
+
+    fetchData(); // Call the async function
+  }, [loggedInUser]); // Dependencies array, re-run effect when loggedInUser changes
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
+
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Welcome to Your Personalized Shop</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {personalizedProducts.map((product) => (
+          <div key={product.id} className="bg-white p-4 rounded shadow hover:shadow-lg">
+            <img
+              src={product.image || 'https://via.placeholder.com/150'}
+              alt={product.name}
+              className="w-full h-40 object-cover rounded mb-4"
+            />
+            <h3 className="text-lg font-semibold">{product.name}</h3>
+            <p className="text-gray-500">{product.category}</p>
+            <p className="text-blue-500 font-bold">${product.price.toFixed(2)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default ShoppingPage;
+//WishlistPage.js
+import React, { useState, useEffect } from 'react';
+import { loadProducts } from '../utils/dataLoader';  // Assuming we have the loadProducts function
+import { Link } from 'react-router-dom';
+
+const WishlistPage = () => {
+  const [products, setProducts] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+
+  useEffect(() => {
+    // Fetch products when the component mounts
+    const fetchProducts = async () => {
+      const allProducts = await loadProducts();
+      setProducts(allProducts);
+    };
+
+    fetchProducts();
+  }, []);
+
+  const toggleWishlist = (product) => {
+    setWishlist((prevWishlist) => {
+      const isProductInWishlist = prevWishlist.find((item) => item.id === product.id);
+      if (isProductInWishlist) {
+        return prevWishlist.filter((item) => item.id !== product.id);  // Remove from wishlist
+      } else {
+        return [...prevWishlist, product];  // Add to wishlist
+      }
+    });
+  };
+
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Your Wishlist</h2>
+      {wishlist.length === 0 ? (
+        <div className="text-center text-gray-500">Your wishlist is empty. Add items to it from the shop.</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {wishlist.map((product) => (
+            <div key={product.id} className="bg-white p-4 rounded shadow hover:shadow-lg">
+              <img
+                src={product.image || 'https://via.placeholder.com/150'}
+                alt={product.name}
+                className="w-full h-40 object-cover rounded mb-4"
+              />
+              <h3 className="text-lg font-semibold">{product.name}</h3>
+              <p className="text-gray-500">{product.category}</p>
+              <p className="text-blue-500 font-bold">${product.price.toFixed(2)}</p>
+              <button
+                onClick={() => toggleWishlist(product)}
+                className="mt-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+              >
+                Remove from Wishlist
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <h3 className="text-xl font-bold mt-8 mb-4">Browse Products</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {products.map((product) => (
+          <div key={product.id} className="bg-white p-4 rounded shadow hover:shadow-lg">
+            <img
+              src={product.image || 'https://via.placeholder.com/150'}
+              alt={product.name}
+              className="w-full h-40 object-cover rounded mb-4"
+            />
+            <h3 className="text-lg font-semibold">{product.name}</h3>
+            <p className="text-gray-500">{product.category}</p>
+            <p className="text-blue-500 font-bold">${product.price.toFixed(2)}</p>
+            <button
+              onClick={() => toggleWishlist(product)}
+              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            >
+              {wishlist.find((item) => item.id === product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        <Link to="/shopping" className="text-blue-500 hover:underline">
+          Go back to Shop
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default WishlistPage;
+
+//dataloader.js
+import Papa from 'papaparse';
+import usersCsv from '../data/users.csv';
+import productsCsv from '../data/products.csv';
+import purchaseHistoryCsv from '../data/purchase_history.csv';
+
+const safeTrim = (value) => (value ? value.trim() : '');
+
+export const loadUsers = () => {
+  return new Promise((resolve, reject) => {
+    let users = [];
+    Papa.parse(usersCsv, {
+      download: true,
+      header: true,
+      complete: (result) => {
+        users = result.data.map((user) => ({
+          userId: safeTrim(user.UserID),
+          username: safeTrim(user.Username),
+          password: safeTrim(user.Password),
+        }));
+        resolve(users);
+      },
+      error: (err) => reject(err),
+    });
+  });
+};
+
+export const loadProducts = () => {
+  return new Promise((resolve, reject) => {
+    let products = [];
+    Papa.parse(productsCsv, {
+      download: true,
+      header: true,
+      complete: (result) => {
+        products = result.data.map((product) => ({
+          id: safeTrim(product.ProductID),
+          name: safeTrim(product.ProductName),
+          category: safeTrim(product.Category),
+          price: parseFloat(product.Price) || 0,
+          image: safeTrim(product.ImageURL),
+        }));
+        resolve(products);
+      },
+      error: (err) => reject(err),
+    });
+  });
+};
+
+export const loadPurchaseHistory = () => {
+  return new Promise((resolve, reject) => {
+    let purchaseHistory = [];
+    Papa.parse(purchaseHistoryCsv, {
+      download: true,
+      header: true,
+      complete: (result) => {
+        purchaseHistory = result.data.map((entry) => ({
+          userId: safeTrim(entry.UserID),
+          productId: safeTrim(entry.ProductID),
+        }));
+        resolve(purchaseHistory);
+      },
+      error: (err) => reject(err),
+    });
+  });
+};
+
+/*app.css*/
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #3C7D6F; /* Slightly darker shade of teal */
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 5px 2px rgba(78, 159, 140, 0.6); /* Soft teal glow */
+}
+
+header {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+header a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+header a:hover {
+  text-decoration: underline;
+}
+
+.card {
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+}
+
+.card img {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+//app.js 
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import ShoppingPage from './pages/ShoppingPage';
+import WishlistPage from './pages/WishlistPage';
+
+const App = () => {
+  const [loggedInUser, setLoggedInUser] = useState(null);
+
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col">
+        <header className="bg-primary text-white py-4">
+          <div className="container mx-auto flex justify-between items-center">
+            <h1 className="text-2xl font-bold">
+              <Link to="/">ShopEase</Link>
+            </h1>
+            <nav className="flex items-center space-x-4">
+              <Link to="/shopping" className="hover:underline">Shop</Link>
+              <Link to="/wishlist" className="hover:underline">Wishlist</Link>
+            </nav>
+          </div>
+        </header>
+
+        <main className="flex-grow bg-secondary py-8">
+          <div className="container mx-auto">
+            <Routes>
+              <Route path="/" element={<LoginPage setLoggedInUser={setLoggedInUser} />} />
+              <Route path="/shopping" element={<ShoppingPage loggedInUser={loggedInUser} />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
+            </Routes>
+          </div>
+        </main>
+
+        <footer className="bg-dark text-white py-4">
+          <div className="container mx-auto text-center">
+            <p>&copy; 2024 ShopEase. All rights reserved.</p>
+          </div>
+        </footer>
+      </div>
+    </Router>
+  );
+};
+
+export default App;
+
+/* global.css*/
+:root {
+    --primary-color: #4E9F8C; /* Muted teal/blue */
+    --accent-color: #D4AF37; /* Soft gold */
+    --background-light: #F8F8F8; /* Light background for light mode */
+    --background-dark: #121212; /* Dark background for dark mode */
+    --text-light: #e0e0e0; /* Light text for dark mode */
+    --text-dark: #333333; /* Dark text for light mode */
+    --button-light-bg: #4E9F8C; /* Light mode button background */
+    --button-dark-bg: #3C7D6F; /* Dark mode button background */
+  }
+  
+  body {
+    background-color: var(--background-light); /* Default light mode */
+    color: var(--text-dark);
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s, color 0.3s ease;
+  }
+  
+  [data-theme="dark"] {
+    background-color: var(--background-dark);
+    color: var(--text-light);
+  }
+  
+  button {
+    background-color: var(--button-light-bg); /* Default button color */
+    color: white;
+    border-radius: 4px;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  [data-theme="dark"] button {
+    background-color: var(--button-dark-bg); /* Dark mode button color */
+  }
+  
+  /*index.css*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #4E9F8C; /* Muted teal/blue */
+  --accent-color: #D4AF37; /* Soft gold */
+  --background-light: #F8F8F8; /* Light background for light mode */
+  --background-dark: #121212; /* Dark background for dark mode */
+  --text-light: #e0e0e0; /* Light text for dark mode */
+  --text-dark: #333333; /* Dark text for light mode */
+}
+
+[data-theme="dark"] {
+  --bg-color: var(--background-dark);
+  --text-color: var(--text-light);
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s ease;
+}
+
+//index.js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();

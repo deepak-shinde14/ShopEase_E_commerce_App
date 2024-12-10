@@ -1,0 +1,1394 @@
+--- Start of ./src\App.css ---
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #3C7D6F; /* Slightly darker shade of teal */
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 5px 2px rgba(78, 159, 140, 0.6); /* Soft teal glow */
+}
+
+header {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+header a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+header a:hover {
+  text-decoration: underline;
+}
+
+.card {
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+}
+
+.card img {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.chatbot-container {
+  width: 300px;
+  height: 400px;
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 1000;
+}
+
+button.fixed.bottom-4.right-4 {
+  z-index: 1001;
+}
+
+
+
+--- Start of ./src\App.js ---
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { User, Moon, Sun, MessageCircle } from 'lucide-react';
+import { UserProvider, useUser } from './context/UserContext'; // Import UserContext
+import LoginPage from './pages/LoginPage';
+import ShoppingPage from './pages/ShoppingPage';
+import WishlistPage from './pages/WishlistPage';
+import UserDetailsModal from './components/UserDetailsModal';
+import ChatBotComponent from './components/ChatBotComponent';
+
+const App = () => {
+  const [showUserDetails, setShowUserDetails] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+  const [isChatBotOpen, setIsChatBotOpen] = useState(false);
+  const { loggedInUser } = useUser();  // Use the user context
+
+  useEffect(() => {
+    document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('darkMode', isDarkMode);
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prevMode) => !prevMode);
+  };
+
+  const toggleChatBot = () => {
+    setIsChatBotOpen((prev) => !prev);
+  };
+
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col">
+        <header className="bg-primary text-white py-4">
+          <div className="container mx-auto flex justify-between items-center">
+            <h1 className="text-2xl font-bold">
+              <Link to="/">ShopEase</Link>
+            </h1>
+            <nav className="flex items-center space-x-4">
+              {loggedInUser && (
+                <>
+                  <Link to="/shopping" className="hover:underline">Shop</Link>
+                  <Link to="/wishlist" className="hover:underline">Wishlist</Link>
+                  <button onClick={toggleDarkMode} className="bg-transparent p-2 rounded-full">
+                    {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
+                  </button>
+                  <button
+                    onClick={() => setShowUserDetails(true)}
+                    className="bg-transparent hover:bg-white/20 p-2 rounded-full"
+                  >
+                    <User size={24} />
+                  </button>
+                </>
+              )}
+            </nav>
+          </div>
+        </header>
+
+        <main className="flex-grow bg-secondary py-8">
+          <div className="container mx-auto">
+            <Routes>
+              <Route path="/" element={<LoginPage />} />
+              <Route path="/shopping" element={<ShoppingPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
+            </Routes>
+          </div>
+        </main>
+
+        {showUserDetails && loggedInUser && (
+          <UserDetailsModal
+            user={loggedInUser}
+            onClose={() => setShowUserDetails(false)}
+          />
+        )}
+
+        <ChatBotComponent isOpen={isChatBotOpen} onClose={toggleChatBot} />
+
+        {loggedInUser && (
+          <button
+            className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600"
+            onClick={toggleChatBot}
+          >
+            <MessageCircle size={24} />
+          </button>
+        )}
+
+        <footer className="bg-dark text-white py-4">
+          <div className="container mx-auto text-center">
+            <p>&copy; 2024 ShopEase. All rights reserved.</p>
+          </div>
+        </footer>
+      </div>
+    </Router>
+  );
+};
+
+const WrappedApp = () => (
+  <UserProvider>
+    <App />
+  </UserProvider>
+);
+
+export default WrappedApp;
+
+
+--- Start of ./src\App.test.js ---
+import { render, screen } from '@testing-library/react';
+import App from './App';
+
+test('renders learn react link', () => {
+  render(<App />);
+  const linkElement = screen.getByText(/learn react/i);
+  expect(linkElement).toBeInTheDocument();
+});
+
+
+--- Start of ./src\index.css ---
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #4E9F8C; /* Muted teal/blue */
+  --accent-color: #D4AF37; /* Soft gold */
+  --background-color: #F8F8F8;
+  --text-color: #333333;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s ease;
+}
+
+--- Start of ./src\index.js ---
+//index.js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+--- Start of ./src\logo.svg ---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 595.3"><g fill="#61DAFB"><path d="M666.3 296.5c0-32.5-40.7-63.3-103.1-82.4 14.4-63.6 8-114.2-20.2-130.4-6.5-3.8-14.1-5.6-22.4-5.6v22.3c4.6 0 8.3.9 11.4 2.6 13.6 7.8 19.5 37.5 14.9 75.7-1.1 9.4-2.9 19.3-5.1 29.4-19.6-4.8-41-8.5-63.5-10.9-13.5-18.5-27.5-35.3-41.6-50 32.6-30.3 63.2-46.9 84-46.9V78c-27.5 0-63.5 19.6-99.9 53.6-36.4-33.8-72.4-53.2-99.9-53.2v22.3c20.7 0 51.4 16.5 84 46.6-14 14.7-28 31.4-41.3 49.9-22.6 2.4-44 6.1-63.6 11-2.3-10-4-19.7-5.2-29-4.7-38.2 1.1-67.9 14.6-75.8 3-1.8 6.9-2.6 11.5-2.6V78.5c-8.4 0-16 1.8-22.6 5.6-28.1 16.2-34.4 66.7-19.9 130.1-62.2 19.2-102.7 49.9-102.7 82.3 0 32.5 40.7 63.3 103.1 82.4-14.4 63.6-8 114.2 20.2 130.4 6.5 3.8 14.1 5.6 22.5 5.6 27.5 0 63.5-19.6 99.9-53.6 36.4 33.8 72.4 53.2 99.9 53.2 8.4 0 16-1.8 22.6-5.6 28.1-16.2 34.4-66.7 19.9-130.1 62-19.1 102.5-49.9 102.5-82.3zm-130.2-66.7c-3.7 12.9-8.3 26.2-13.5 39.5-4.1-8-8.4-16-13.1-24-4.6-8-9.5-15.8-14.4-23.4 14.2 2.1 27.9 4.7 41 7.9zm-45.8 106.5c-7.8 13.5-15.8 26.3-24.1 38.2-14.9 1.3-30 2-45.2 2-15.1 0-30.2-.7-45-1.9-8.3-11.9-16.4-24.6-24.2-38-7.6-13.1-14.5-26.4-20.8-39.8 6.2-13.4 13.2-26.8 20.7-39.9 7.8-13.5 15.8-26.3 24.1-38.2 14.9-1.3 30-2 45.2-2 15.1 0 30.2.7 45 1.9 8.3 11.9 16.4 24.6 24.2 38 7.6 13.1 14.5 26.4 20.8 39.8-6.3 13.4-13.2 26.8-20.7 39.9zm32.3-13c5.4 13.4 10 26.8 13.8 39.8-13.1 3.2-26.9 5.9-41.2 8 4.9-7.7 9.8-15.6 14.4-23.7 4.6-8 8.9-16.1 13-24.1zM421.2 430c-9.3-9.6-18.6-20.3-27.8-32 9 .4 18.2.7 27.5.7 9.4 0 18.7-.2 27.8-.7-9 11.7-18.3 22.4-27.5 32zm-74.4-58.9c-14.2-2.1-27.9-4.7-41-7.9 3.7-12.9 8.3-26.2 13.5-39.5 4.1 8 8.4 16 13.1 24 4.7 8 9.5 15.8 14.4 23.4zM420.7 163c9.3 9.6 18.6 20.3 27.8 32-9-.4-18.2-.7-27.5-.7-9.4 0-18.7.2-27.8.7 9-11.7 18.3-22.4 27.5-32zm-74 58.9c-4.9 7.7-9.8 15.6-14.4 23.7-4.6 8-8.9 16-13 24-5.4-13.4-10-26.8-13.8-39.8 13.1-3.1 26.9-5.8 41.2-7.9zm-90.5 125.2c-35.4-15.1-58.3-34.9-58.3-50.6 0-15.7 22.9-35.6 58.3-50.6 8.6-3.7 18-7 27.7-10.1 5.7 19.6 13.2 40 22.5 60.9-9.2 20.8-16.6 41.1-22.2 60.6-9.9-3.1-19.3-6.5-28-10.2zM310 490c-13.6-7.8-19.5-37.5-14.9-75.7 1.1-9.4 2.9-19.3 5.1-29.4 19.6 4.8 41 8.5 63.5 10.9 13.5 18.5 27.5 35.3 41.6 50-32.6 30.3-63.2 46.9-84 46.9-4.5-.1-8.3-1-11.3-2.7zm237.2-76.2c4.7 38.2-1.1 67.9-14.6 75.8-3 1.8-6.9 2.6-11.5 2.6-20.7 0-51.4-16.5-84-46.6 14-14.7 28-31.4 41.3-49.9 22.6-2.4 44-6.1 63.6-11 2.3 10.1 4.1 19.8 5.2 29.1zm38.5-66.7c-8.6 3.7-18 7-27.7 10.1-5.7-19.6-13.2-40-22.5-60.9 9.2-20.8 16.6-41.1 22.2-60.6 9.9 3.1 19.3 6.5 28.1 10.2 35.4 15.1 58.3 34.9 58.3 50.6-.1 15.7-23 35.6-58.4 50.6zM320.8 78.4z"/><circle cx="420.9" cy="296.5" r="45.7"/><path d="M520.5 78.1z"/></g></svg>
+
+--- Start of ./src\reportWebVitals.js ---
+const reportWebVitals = onPerfEntry => {
+  if (onPerfEntry && onPerfEntry instanceof Function) {
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      getCLS(onPerfEntry);
+      getFID(onPerfEntry);
+      getFCP(onPerfEntry);
+      getLCP(onPerfEntry);
+      getTTFB(onPerfEntry);
+    });
+  }
+};
+
+export default reportWebVitals;
+
+
+--- Start of ./src\setupTests.js ---
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
+import '@testing-library/jest-dom';
+
+
+--- Start of ./src\components\ChatBotComponent.js ---
+// ./src/components/ChatBotComponent.js
+import React from 'react';
+import ChatBot from 'react-simple-chatbot';
+
+const ChatBotComponent = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  const steps = [
+    { id: '1', message: 'Hi! How can I assist you today?', trigger: 'options' },
+    {
+      id: 'options',
+      options: [
+        { value: 'shop', label: 'Browse Products', trigger: 'shop' },
+        { value: 'wishlist', label: 'View Wishlist', trigger: 'wishlist' },
+        { value: 'help', label: 'Get Help', trigger: 'help' },
+      ],
+    },
+    { id: 'shop', message: 'You can browse products in the Shop section!', end: true },
+    { id: 'wishlist', message: 'View your wishlist for saved items.', end: true },
+    { id: 'help', message: 'Contact support for further assistance.', end: true },
+  ];
+
+  return (
+    <div className="chatbot-container fixed bottom-20 right-10 bg-white shadow-lg border rounded">
+      <button
+        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        onClick={onClose}
+      >
+        ✖
+      </button>
+      <ChatBot steps={steps} />
+    </div>
+  );
+};
+
+export default ChatBotComponent;
+
+
+--- Start of ./src\components\FilterSidebar.js ---
+//filtersidebar.js
+import React from 'react';
+
+const FilterSidebar = ({ categories, selectedCategory, onFilter }) => {
+    return (
+      <aside className="w-1/4 bg-white p-4 shadow-lg">
+        <h3 className="text-lg font-semibold mb-4">Categories</h3>
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => onFilter(category)}
+            className={`w-full text-left px-4 py-2 mb-2 rounded ${
+              selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-100'
+            } hover:bg-primary hover:text-white`}
+          >
+            {category}
+          </button>
+        ))}
+      </aside>
+    );
+  };
+  
+
+export default FilterSidebar;
+
+
+--- Start of ./src\components\Footer.js ---
+//footer.js
+// empty file
+
+--- Start of ./src\components\Header.js ---
+//header.js
+// empty file
+
+--- Start of ./src\components\ProductCard.js ---
+//ProductCard.js
+import React, { useState } from 'react';
+
+const ProductCard = ({ product, onAddToWishlist }) => {
+  const [isInWishlist, setIsInWishlist] = useState(false);
+
+  const handleWishlist = () => {
+    onAddToWishlist(product);
+    setIsInWishlist(!isInWishlist);
+  };
+
+  return (
+    <div className="border rounded p-4 shadow-lg">
+      <img src={product.image} alt={product.name} className="w-full h-40 object-cover" />
+      <h3>{product.name}</h3>
+      <p>₹{product.price}</p>
+      <button
+        onClick={handleWishlist}
+        className={`mt-2 px-4 py-2 rounded ${
+          isInWishlist ? 'bg-red-500' : 'bg-blue-500'
+        } text-white`}
+      >
+        {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+      </button>
+    </div>
+  );
+};
+
+
+export default ProductCard;
+
+
+--- Start of ./src\components\ProductList.js ---
+//ProductList.js
+import React from 'react';
+import ProductCard from './ProductCard';
+
+const ProductList = ({ userId, products, purchaseHistory }) => {
+  // Filter purchased product categories for the current user
+  const userPurchases = purchaseHistory.filter(p => p.UserID === userId);
+  const purchasedProductIDs = userPurchases.map(p => p.ProductID);
+  const purchasedCategories = [...new Set(products
+    .filter(p => purchasedProductIDs.includes(p.ProductID))
+    .map(p => p.Category))];
+
+  // Separate products into purchased and non-purchased categories
+  const nonPurchasedProducts = products
+    .filter(p => !purchasedCategories.includes(p.Category))
+    .sort((a, b) => a.ProductName.localeCompare(b.ProductName));
+
+  const purchasedProducts = products
+    .filter(p => purchasedCategories.includes(p.Category))
+    .sort((a, b) => a.ProductName.localeCompare(b.ProductName));
+
+  const sortedProducts = [...nonPurchasedProducts, ...purchasedProducts];
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+      {sortedProducts.map(product => (
+        <ProductCard key={product.ProductID} product={product} />
+      ))}
+    </div>
+  );
+};
+
+export default ProductList;
+
+
+--- Start of ./src\components\SearchBar.js ---
+import React, { useState, useEffect } from 'react';
+
+const SearchBar = ({ onSearch }) => {
+  const [recentSearches, setRecentSearches] = useState(
+    JSON.parse(localStorage.getItem('recentSearches')) || []
+  );
+
+  const handleSearch = (query) => {
+    onSearch(query);
+    const updatedSearches = [query, ...recentSearches.filter((q) => q !== query)].slice(0, 5);
+    setRecentSearches(updatedSearches);
+    localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
+  };
+
+  return (
+    <div className="w-full flex flex-col items-center my-4">
+      <input
+        type="text"
+        className="p-2 border rounded w-1/2"
+        placeholder="Search products..."
+        onChange={(e) => handleSearch(e.target.value)}
+      />
+      {recentSearches.length > 0 && (
+        <div className="mt-2 w-1/2 text-left">
+          <p className="text-gray-600 mb-1">Recent Searches:</p>
+          <ul className="list-disc list-inside">
+            {recentSearches.map((search, index) => (
+              <li
+                key={index}
+                className="cursor-pointer text-blue-500 hover:underline"
+                onClick={() => handleSearch(search)}
+              >
+                {search}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SearchBar;
+
+
+--- Start of ./src\components\UserDetailsModal.js ---
+import React from 'react';
+import { X } from 'lucide-react';
+import { useUser } from '../context/UserContext'; // Import the User Context
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
+
+const UserDetailsModal = ({ user, onClose }) => {
+  const { logout } = useUser();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout(); // Clear user data
+    onClose(); // Close the modal
+    navigate('/'); // Redirect to the LoginPage
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-96 relative">
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+        >
+          <X size={24} />
+        </button>
+        <div className="text-center">
+          <div className="bg-primary text-white rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">{user.username[0].toUpperCase()}</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">{user.username}</h2>
+          <div className="text-gray-600 space-y-2">
+            <p><strong>User ID:</strong> {user.userId}</p>
+            <p><strong>Account Type:</strong> Regular User</p>
+            <p><strong>Member Since:</strong> {new Date().getFullYear()}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="mt-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserDetailsModal;
+
+
+--- Start of ./src\components\Wishlist.js ---
+//Wishlist.js
+import React from 'react';
+import ProductCard from './ProductCard';
+
+const Wishlist = ({ wishlist }) => {
+  return (
+    <div>
+      <h2 className="text-2xl font-bold my-4">Your Wishlist</h2>
+      <div className="flex flex-wrap">
+        {wishlist.map((product) => (
+          <ProductCard key={product.ProductID} product={product} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Wishlist;
+
+
+--- Start of ./src\context\UserContext.js ---
+import React, { createContext, useState, useContext } from 'react';
+
+const UserContext = createContext();
+
+export const useUser = () => useContext(UserContext);
+
+export const UserProvider = ({ children }) => {
+    const [loggedInUser, setLoggedInUser] = useState(null);
+  
+    const setUserWishlist = (wishlist) => {
+      if (loggedInUser) {
+        localStorage.setItem(`wishlist-${loggedInUser.userId}`, JSON.stringify(wishlist));
+      }
+    };
+  
+    const getUserWishlist = () => {
+      if (loggedInUser) {
+        return JSON.parse(localStorage.getItem(`wishlist-${loggedInUser.userId}`)) || [];
+      }
+      return [];
+    };
+  
+    const logout = () => {
+      setLoggedInUser(null);
+      localStorage.removeItem('loggedInUser');
+    };
+  
+    return (
+      <UserContext.Provider
+        value={{ loggedInUser, setLoggedInUser, logout, setUserWishlist, getUserWishlist }}
+      >
+        {children}
+      </UserContext.Provider>
+    );
+  };
+
+--- Start of ./src\data\products.csv ---
+ProductID,ProductName,Category,Price,ImageURL
+101,Classic White Shirt,Tops,2399,https://via.placeholder.com/150
+102,Denim Jeans,Bottoms,3999,https://via.placeholder.com/150
+103,Leather Jacket,Outerwear,7299,https://via.placeholder.com/150
+104,Black T-Shirt,Tops,1599,https://via.placeholder.com/150
+105,Chinos,Bottoms,3199,https://via.placeholder.com/150
+106,Hoodie,Outerwear,4799,https://via.placeholder.com/150
+107,Striped Shirt,Tops,2799,https://via.placeholder.com/150
+108,Shorts,Bottoms,1999,https://via.placeholder.com/150
+109,Blazer,Outerwear,7999,https://via.placeholder.com/150
+110,Graphic Tee,Tops,1999,https://via.placeholder.com/150
+
+
+--- Start of ./src\data\purchase_history.csv ---
+UserID,ProductID,PurchaseDate
+1,101,2023-01-15
+1,104,2023-02-20
+1,105,2023-03-05
+2,102,2023-01-25
+2,106,2023-04-18
+3,103,2023-02-10
+3,107,2023-03-22
+3,108,2023-05-30
+
+
+--- Start of ./src\data\users.csv ---
+UserID,Username,Password
+1,user1,password123
+2,user2,password123
+3,user3,password123
+
+
+--- Start of ./src\pages\LoginPage.js ---
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { loadUsers } from '../utils/dataLoader'; // Import the async loader
+import { useUser } from '../context/UserContext';  // Import the useUser hook
+
+const LoginPage = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [users, setUsers] = useState([]); // Local state for users
+  const { setLoggedInUser } = useUser();  // Access setLoggedInUser from context
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const loadedUsers = await loadUsers();  // Await the async call to load users
+        setUsers(loadedUsers);  // Set the users in state
+      } catch (error) {
+        console.error('Error loading users:', error);
+        setError('Failed to load users');
+      }
+    };
+    
+    fetchUsers();  // Call the async function
+  }, []);
+
+  const handleLogin = () => {
+    if (users.length === 0) {
+      setError('Users are still loading. Please try again later.');
+      return;
+    }
+
+    const user = users.find(
+      (u) => u.username === username && u.password === password
+    );
+
+    if (user) {
+      setLoggedInUser(user);  // Set user in context
+      setError('');
+      navigate('/shopping');  // Navigate to shopping page after login
+    } else {
+      setError('Invalid username or password');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Welcome Back!</h2>
+        <p className="text-center text-gray-600 mb-4">Please log in to continue</p>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        <div className="mb-4">
+          <label htmlFor="username" className="block text-gray-700 font-medium mb-2">
+            Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            placeholder="Enter your username"
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div className="mb-6">
+          <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-300"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={handleLogin}
+          className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300"
+        >
+          Login
+        </button>
+        <p className="text-center text-gray-500 text-sm mt-6">
+          Need help? <a href="#" className="text-blue-500 hover:underline">Contact Support</a>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
+
+
+--- Start of ./src\pages\OrderPage.js ---
+import React, { useState, useEffect } from 'react';
+import { loadPurchaseHistory, loadProducts } from '../utils/dataLoader';
+
+const OrderPage = ({ loggedInUser }) => {
+  const [orders, setOrders] = useState([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const purchaseHistory = await loadPurchaseHistory();
+        const products = await loadProducts();
+
+        const userOrders = purchaseHistory
+          .filter((entry) => entry.userId === loggedInUser?.userId)
+          .map((entry) => {
+            const product = products.find((p) => p.id === entry.productId);
+            return {
+              ...product,
+              purchaseDate: entry.purchaseDate,
+            };
+          });
+
+        setOrders(userOrders);
+      } catch (err) {
+        setError('Failed to load orders.');
+      }
+    };
+
+    if (loggedInUser) {
+      fetchOrders();
+    }
+  }, [loggedInUser]);
+
+  if (!loggedInUser) {
+    return <div>Please log in to view your orders.</div>;
+  }
+
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Your Orders</h2>
+      {error ? (
+        <div className="text-red-500">{error}</div>
+      ) : orders.length === 0 ? (
+        <div>You have no orders.</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {orders.map((order, index) => (
+            <div key={index} className="border rounded shadow p-4">
+              <img
+                src={order.image || 'https://via.placeholder.com/150'}
+                alt={order.name}
+                className="w-full h-40 object-cover rounded"
+              />
+              <h3 className="text-lg font-bold">{order.name}</h3>
+              <p>{order.category}</p>
+              <p>${order.price.toFixed(2)}</p>
+              <p className="text-sm text-gray-500">
+                Purchased on: {new Date(order.purchaseDate).toLocaleDateString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OrderPage;
+
+
+--- Start of ./src\pages\ShoppingPage.js ---
+import React, { useState, useEffect } from 'react';
+import { loadProducts } from '../utils/dataLoader';
+import purchaseHistory from '../data/purchase_history.csv'; // Assuming you can import the CSV data
+
+const ShoppingPage = ({ loggedInUser }) => {
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [recentlyViewed, setRecentlyViewed] = useState(
+    JSON.parse(localStorage.getItem(`recentlyViewed_${loggedInUser?.userId}`)) || []
+  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [flashSaleProducts, setFlashSaleProducts] = useState([]);
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+
+  const [filters, setFilters] = useState({
+    size: '',
+    brand: '',
+    category: '',
+    minPrice: '',
+    maxPrice: '',
+    material: '',
+    color: '',
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 8;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const allProducts = await loadProducts();
+      setProducts(allProducts);
+      setFilteredProducts(allProducts);
+
+      // Filter flash sale products (e.g., those under a certain price)
+      const flashSale = allProducts.filter(product => product.price < 3000); // Example condition
+      setFlashSaleProducts(flashSale);
+
+      // Check purchase history for the logged-in user and filter recommendations
+      if (loggedInUser) {
+        // Assuming purchaseHistory is an array of objects that includes userID and productID
+        const userPurchaseHistory = purchaseHistory.filter(entry => entry.UserID === loggedInUser.userId);
+        const purchasedProductIds = userPurchaseHistory.map(entry => entry.ProductID);
+
+        // Get products that the user has already purchased
+        const purchasedProducts = allProducts.filter(product =>
+          purchasedProductIds.includes(product.id)
+        );
+        setRecommendedProducts(purchasedProducts);
+
+        // Optionally: Recommend complementary products based on categories or similar attributes
+        const complementaryProducts = allProducts.filter(product => {
+          return purchasedProducts.some(purchasedProduct => purchasedProduct.category === product.category);
+        });
+        setRecommendedProducts([...recommendedProducts, ...complementaryProducts]);
+      }
+    };
+
+    fetchData();
+  }, [loggedInUser]);
+
+  useEffect(() => {
+    let filtered = products;
+
+    // Apply filters
+    if (filters.size) filtered = filtered.filter(product => product.size === filters.size);
+    if (filters.brand) filtered = filtered.filter(product => product.brand === filters.brand);
+    if (filters.category) filtered = filtered.filter(product => product.category === filters.category);
+    if (filters.minPrice) filtered = filtered.filter(product => product.price >= parseFloat(filters.minPrice));
+    if (filters.maxPrice) filtered = filtered.filter(product => product.price <= parseFloat(filters.maxPrice));
+    if (filters.material) filtered = filtered.filter(product => product.material === filters.material);
+    if (filters.color) filtered = filtered.filter(product => product.color === filters.color);
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        product.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredProducts(filtered);
+  }, [filters, products, searchQuery]);
+
+  const handleSearchChange = (event) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+
+    if (query) {
+      const filteredSuggestions = products.filter(product => 
+        product.name.toLowerCase().includes(query.toLowerCase()) ||
+        product.category.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 5);
+      setSearchSuggestions(filteredSuggestions);
+    } else {
+      setSearchSuggestions([]);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setSearchQuery(suggestion.name);
+    setSearchSuggestions([]);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchSuggestions([]);
+    setFilteredProducts(products);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prevFilters => ({ ...prevFilters, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = page => setCurrentPage(page);
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+  const handleProductClick = product => {
+    if (loggedInUser) {
+      const updatedRecentlyViewed = [product, ...recentlyViewed.filter(item => item.id !== product.id)];
+      setRecentlyViewed(updatedRecentlyViewed);
+      localStorage.setItem(`recentlyViewed_${loggedInUser.userId}`, JSON.stringify(updatedRecentlyViewed));
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Shop Products</h2>
+
+      {/* Search Bar */}
+      <div className="mb-6 flex items-center">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder="Search products..."
+          className="p-2 border rounded w-1/2"
+        />
+        {searchQuery && (
+          <button onClick={handleClearSearch} className="ml-2 text-gray-500">Clear</button>
+        )}
+      </div>
+
+      {/* Search Suggestions */}
+      {searchSuggestions.length > 0 && (
+        <div className="mb-6">
+          <ul className="bg-white shadow-lg border rounded-md">
+            {searchSuggestions.map((product) => (
+              <li key={product.id} className="p-2 cursor-pointer hover:bg-gray-200" onClick={() => handleSuggestionClick(product)}>
+                {product.name} ({product.category})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Flash Sale Notification */}
+      {flashSaleProducts.length > 0 && (
+        <div className="mb-6 bg-red-500 text-white p-4 rounded">
+          <h3 className="text-lg font-bold">Flash Sale! Limited Time Offer!</h3>
+          <p>Hurry up! Check out products on flash sale with amazing discounts!</p>
+        </div>
+      )}
+
+      {/* Recommended Products */}
+      {recommendedProducts.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-xl font-bold mb-4">Recommended for You</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {recommendedProducts.map(product => (
+              <div key={product.id} className="bg-white p-4 rounded shadow hover:shadow-lg">
+                <img
+                  src={product.image || 'https://via.placeholder.com/150'}
+                  alt={product.name}
+                  className="w-full h-40 object-cover rounded mb-4"
+                />
+                <h3 className="text-lg font-semibold">{product.name}</h3>
+                <p className="text-gray-500">{product.category}</p>
+                <p className="text-blue-500 font-bold">₹{product.price.toFixed(2)}</p>
+                <button
+                  onClick={() => handleProductClick(product)}
+                  className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                >
+                  View Product
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Filtering Section */}
+      {/* Same as previous, with filters for size, brand, etc. */}
+
+      {/* Products Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {paginatedProducts.map(product => (
+          <div key={product.id} className="bg-white p-4 rounded shadow hover:shadow-lg">
+            <img
+              src={product.image || 'https://via.placeholder.com/150'}
+              alt={product.name}
+              className="w-full h-40 object-cover rounded mb-4"
+            />
+            <h3 className="text-lg font-semibold">{product.name}</h3>
+            <p className="text-gray-500">{product.category}</p>
+            <p className="text-blue-500 font-bold">₹{product.price.toFixed(2)}</p>
+            <button
+              onClick={() => handleProductClick(product)}
+              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            >
+              View Product
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-6 flex justify-center">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+        >
+          Prev
+        </button>
+        <span className="mx-4">{currentPage} / {totalPages}</span>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ShoppingPage;
+
+
+--- Start of ./src\pages\WishlistPage.js ---
+import React, { useState, useEffect } from 'react';
+import { loadProducts } from '../utils/dataLoader'; // Mock data loader
+import { Link } from 'react-router-dom';
+import { useUser } from '../context/UserContext'; // Assuming useUser is exported from UserContext
+
+const WishlistPage = () => {
+  const [products, setProducts] = useState([]); // All products
+  const [wishlist, setWishlist] = useState([]); // User's wishlist
+  const [priceAlerts, setPriceAlerts] = useState([]); // Price drop alerts
+  const { loggedInUser, getUserWishlist, setUserWishlist } = useUser(); // Access user-specific methods from context
+
+  useEffect(() => {
+    // Fetch products when the component mounts
+    const fetchProducts = async () => {
+      const allProducts = await loadProducts();
+      setProducts(allProducts);
+    };
+
+    fetchProducts();
+
+    if (loggedInUser) {
+      // Fetch the wishlist for the logged-in user
+      const userWishlist = getUserWishlist();
+      setWishlist(userWishlist);
+    }
+  }, [loggedInUser, getUserWishlist]);
+
+  useEffect(() => {
+    // Simulate periodic price updates and check for price drops
+    const interval = setInterval(() => {
+      const updatedProducts = products.map((product) => {
+        // Simulate random price changes
+        const randomChange = Math.random() > 0.7 ? -1 * Math.floor(Math.random() * 500) : 0;
+        const newPrice = Math.max(product.price + randomChange, 1); // Prevent negative prices
+
+        return { ...product, price: newPrice };
+      });
+
+      setProducts(updatedProducts);
+
+      // Check for price drops in the wishlist
+      const alerts = wishlist.reduce((acc, item) => {
+        const updatedProduct = updatedProducts.find((p) => p.id === item.id);
+        if (
+          updatedProduct &&
+          item.desiredPrice &&
+          updatedProduct.price < item.desiredPrice
+        ) {
+          acc.push({
+            id: updatedProduct.id,
+            name: updatedProduct.name,
+            desiredPrice: item.desiredPrice,
+            newPrice: updatedProduct.price,
+          });
+        }
+        return acc;
+      }, []);
+
+      setPriceAlerts(alerts);
+    }, 5000); // Update every 5 seconds for simulation
+
+    return () => clearInterval(interval); // Clean up the interval
+  }, [products, wishlist]);
+
+  const toggleWishlist = (product) => {
+    if (!loggedInUser) {
+      alert('You must log in to modify your wishlist.');
+      return;
+    }
+
+    const updatedWishlist = wishlist.some((item) => item.id === product.id)
+      ? wishlist.filter((item) => item.id !== product.id) // Remove from wishlist
+      : [...wishlist, { ...product, desiredPrice: '' }]; // Add to wishlist with default desired price
+
+    setWishlist(updatedWishlist);
+    setUserWishlist(updatedWishlist); // Save to localStorage via context
+  };
+
+  const updateDesiredPrice = (id, price) => {
+    if (isNaN(price)) return; // Prevent saving non-numeric values
+
+    setWishlist((prevWishlist) =>
+      prevWishlist.map((item) =>
+        item.id === id ? { ...item, desiredPrice: price } : item
+      )
+    );
+
+    // Save updated desired prices to localStorage
+    const updatedDesiredPrices = wishlist.reduce((acc, item) => {
+      acc[item.id] = item.desiredPrice;
+      return acc;
+    }, {});
+
+    setUserWishlist(wishlist.map((item) => ({ ...item, desiredPrice: updatedDesiredPrices[item.id] })));
+  };
+
+  const dismissAlert = (id) => {
+    setPriceAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.id !== id));
+  };
+
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Your Wishlist</h2>
+
+      {/* Price Drop Alerts */}
+      {priceAlerts.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-bold text-red-500">Price Drop Alerts</h3>
+          <ul>
+            {priceAlerts.map((alert) => (
+              <li
+                key={alert.id}
+                className="bg-yellow-100 p-4 rounded shadow mb-4 flex justify-between items-center"
+              >
+                <div>
+                  <p>
+                    <strong>{alert.name}</strong> has dropped to{' '}
+                    <span className="text-green-500">₹{alert.newPrice.toFixed(2)}</span>{' '}
+                    (Desired Price: ₹{alert.desiredPrice.toFixed(2)})
+                  </p>
+                </div>
+                <button
+                  onClick={() => dismissAlert(alert.id)}
+                  className="bg-red-500 text-white px-4 py-2 rounded"
+                >
+                  Dismiss
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Wishlist Items */}
+      {wishlist.length === 0 ? (
+        <div className="text-center text-gray-500">Your wishlist is empty. Add items to it from the shop.</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {wishlist.map((product) => (
+            <div key={product.id} className="bg-white p-4 rounded shadow hover:shadow-lg">
+              <img
+                src={product.image || 'https://via.placeholder.com/150'}
+                alt={product.name}
+                className="w-full h-40 object-cover rounded mb-4"
+              />
+              <h3 className="text-lg font-semibold">{product.name}</h3>
+              <p className="text-gray-500">{product.category}</p>
+              <p className="text-blue-500 font-bold">₹{product.price.toFixed(2)}</p>
+              <div className="mt-4">
+                <label htmlFor={`price-${product.id}`} className="block text-sm font-medium text-gray-700">
+                  Desired Price
+                </label>
+                <input
+                  type="number"
+                  id={`price-${product.id}`}
+                  value={product.desiredPrice || ''}
+                  onChange={(e) => updateDesiredPrice(product.id, parseFloat(e.target.value))}
+                  className="w-full mt-1 p-2 border rounded"
+                  placeholder="Set desired price"
+                />
+              </div>
+              <button
+                onClick={() => toggleWishlist(product)}
+                className="mt-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+              >
+                Remove from Wishlist
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Browse Products */}
+      <h3 className="text-xl font-bold mt-8 mb-4">Browse Products</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {products.map((product) => (
+          <div key={product.id} className="bg-white p-4 rounded shadow hover:shadow-lg">
+            <img
+              src={product.image || 'https://via.placeholder.com/150'}
+              alt={product.name}
+              className="w-full h-40 object-cover rounded mb-4"
+            />
+            <h3 className="text-lg font-semibold">{product.name}</h3>
+            <p className="text-gray-500">{product.category}</p>
+            <p className="text-blue-500 font-bold">₹{product.price.toFixed(2)}</p>
+            <button
+              onClick={() => toggleWishlist(product)}
+              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            >
+              {wishlist.some((item) => item.id === product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        <Link to="/shopping" className="text-blue-500 hover:underline">
+          Go back to Shop
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default WishlistPage;
+
+
+--- Start of ./src\styles\global.css ---
+:root {
+  --primary-color: #4E9F8C; /* Default light theme colors */
+  --accent-color: #D4AF37;
+  --background-light: #F8F8F8;
+  --text-light: #333333;
+
+  /* Dark theme variables */
+  --background-dark: #121212;
+  --text-dark: #e0e0e0;
+  --button-light-bg: #4E9F8C;
+  --button-dark-bg: #3C7D6F;
+}
+
+body {
+  background-color: var(--background-light);
+  color: var(--text-light);
+  transition: background-color 0.3s, color 0.3s ease;
+}
+
+[data-theme='dark'] {
+  background-color: var(--background-dark);
+  color: var(--text-dark);
+}
+
+button {
+  background-color: var(--button-light-bg);
+  color: white;
+  border-radius: 4px;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme='dark'] button {
+  background-color: var(--button-dark-bg);
+}
+
+header, footer {
+  background-color: var(--primary-color);
+}
+
+[data-theme='dark'] header,
+[data-theme='dark'] footer {
+  background-color: var(--button-dark-bg);
+}
+
+.card {
+  background-color: white;
+  color: var(--text-light);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
+}
+
+[data-theme='dark'] .card {
+  background-color: #1E1E1E;
+  color: var(--text-dark);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+input, select {
+  background-color: white;
+  color: var(--text-light);
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  padding: 10px;
+}
+
+[data-theme='dark'] input,
+[data-theme='dark'] select {
+  background-color: #1E1E1E;
+  color: var(--text-dark);
+  border: 1px solid var(--text-dark);
+}
+
+
+--- Start of ./src\styles\theme.css ---
+
+
+--- Start of ./src\utils\dataLoader.js ---
+//dataloader.js
+import Papa from 'papaparse';
+import usersCsv from '../data/users.csv';
+import productsCsv from '../data/products.csv';
+import purchaseHistoryCsv from '../data/purchase_history.csv';
+
+const safeTrim = (value) => (value ? value.trim() : '');
+
+export const loadUsers = () => {
+  return new Promise((resolve, reject) => {
+    let users = [];
+    Papa.parse(usersCsv, {
+      download: true,
+      header: true,
+      complete: (result) => {
+        users = result.data.map((user) => ({
+          userId: safeTrim(user.UserID),
+          username: safeTrim(user.Username),
+          password: safeTrim(user.Password),
+        }));
+        resolve(users);
+      },
+      error: (err) => reject(err),
+    });
+  });
+};
+
+export const loadProducts = () => {
+  return new Promise((resolve, reject) => {
+    let products = [];
+    Papa.parse(productsCsv, {
+      download: true,
+      header: true,
+      complete: (result) => {
+        products = result.data.map((product) => ({
+          id: safeTrim(product.ProductID),
+          name: safeTrim(product.ProductName),
+          category: safeTrim(product.Category),
+          price: parseFloat(product.Price) || 0,
+          image: safeTrim(product.ImageURL),
+        }));
+        resolve(products);
+      },
+      error: (err) => reject(err),
+    });
+  });
+};
+
+export const loadPurchaseHistory = () => {
+  return new Promise((resolve, reject) => {
+    let purchaseHistory = [];
+    Papa.parse(purchaseHistoryCsv, {
+      download: true,
+      header: true,
+      complete: (result) => {
+        purchaseHistory = result.data.map((entry) => ({
+          userId: safeTrim(entry.UserID),
+          productId: safeTrim(entry.ProductID),
+        }));
+        resolve(purchaseHistory);
+      },
+      error: (err) => reject(err),
+    });
+  });
+};
+
+
